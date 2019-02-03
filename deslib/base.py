@@ -901,3 +901,9 @@ class BaseDS(BaseEstimator, ClassifierMixin):
         """
         for clf in self.pool_classifiers:
             check_is_fitted(clf, "classes_")
+
+    def _check_dsel_perc(self):
+        if self.pool_classifiers is None:
+            if self.dsel_perc < 0 or self.dsel_perc >= 1:
+                raise ValueError("dsel_perc must be in the range [0, 1). "
+                                 "Got {}" .format(self.dsel_perc))
