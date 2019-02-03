@@ -142,6 +142,15 @@ def test_empty_pool(create_X_y):
         ds.fit(X, y)
 
 
+def test_not_fitted_pool(create_X_y):
+    X, y = create_X_y
+    base_classifier = KNeighborsClassifier()
+    pool_classifiers = [base_classifier] * 10
+    ds_test = BaseDS(pool_classifiers=pool_classifiers)
+    with pytest.raises(NotFittedError):
+        ds_test.fit(X, y)
+
+
 # Should raise a NotFittedError since the function 'fit' was
 # not called before predict
 def test_not_fitted_ds():
