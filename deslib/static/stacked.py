@@ -13,8 +13,8 @@ class StackedClassifier(BaseStaticEnsemble):
     pool_classifiers : list of classifiers (Default = None)
         The generated_pool of classifiers trained for the corresponding
         classification problem. Each base classifiers should support the method
-        "predict". If None, then the pool of classifiers is a bagging
-        classifier.
+        "predict". If None, then the pool of classifiers is
+        composed of 10 Perceptrons generated with Bagging.
 
     meta_classifier : object or None, optional (default=None)
         Classifier model used to aggregate the output of the base classifiers.

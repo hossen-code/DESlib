@@ -36,8 +36,8 @@ class APosteriori(BaseDCS):
     pool_classifiers : list of classifiers (Default = None)
         The generated_pool of classifiers trained for the corresponding
         classification problem. Each base classifiers should support the method
-        "predict" and "predict_proba". If None, then the pool of classifiers is
-        a bagging classifier.
+        "predict" and "predict_proba". If None, then a pool composed of
+        10 Perceptrons is generated using Bagging.
 
     k : int (Default = 7)
         Number of neighbors used to estimate the competence of the base

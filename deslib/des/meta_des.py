@@ -43,8 +43,8 @@ class METADES(BaseDES):
      pool_classifiers : list of classifiers (Default = None)
         The generated_pool of classifiers trained for the corresponding
         classification problem. Each base classifiers should support the method
-        "predict". If None, then the pool of classifiers is a bagging
-        classifier.
+        "predict". If None, then the pool of classifiers is
+        composed of 10 Perceptrons generated with Bagging.
 
     meta_classifier :   sklearn.estimator (Default = None)
                         Classifier model used for the meta-classifier. If None,
