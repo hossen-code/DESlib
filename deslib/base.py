@@ -13,6 +13,8 @@ import functools
 from scipy.stats import mode
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.ensemble import BaseEnsemble, BaggingClassifier
+from sklearn.linear_model import Perceptron
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder
@@ -214,7 +216,11 @@ class BaseDS(BaseEstimator, ClassifierMixin):
                 X, y, test_size=self.DSEL_perc,
                 random_state=self.random_state_)
 
-            self.pool_classifiers_ = BaggingClassifier(
+            model = Perceptron(n_iter=1000,
+                               alpha=0.1,
+                               random_state=self.random_state)
+            model = CalibratedClassifierCV(model)
+            self.pool_classifiers_ = BaggingClassifier(base_estimator=model,
                 random_state=self.random_state_)
             self.pool_classifiers_.fit(X_train, y_train)
 
@@ -239,10 +245,12 @@ class BaseDS(BaseEstimator, ClassifierMixin):
 
         self._setup_label_encoder(y)
         y_dsel = self.enc_.transform(y_dsel)
+
+        # pre-process the dynamic selection dataset.
         self._set_dsel(X_dsel, y_dsel)
 
         # validate the value of k
-        self._validate_k()
+        self._check_k()
         self._set_region_of_competence_algorithm()
         self._fit_region_competence(X_dsel, y_dsel)
 
@@ -261,23 +269,6 @@ class BaseDS(BaseEstimator, ClassifierMixin):
         if self.IH_rate > highest_IH:
             warnings.warn("IH_rate is bigger than the highest possible IH.",
                           category=RuntimeWarning)
-
-    def _validate_k(self):
-
-        # validate safe_k
-        if self.k is None:
-            self.k_ = self.n_samples_
-        elif self.k > self.n_samples_:
-            msg = "k is bigger than DSEL size. Using All DSEL examples " \
-                  "for competence estimation."
-            warnings.warn(msg, category=RuntimeWarning)
-            self.k_ = self.n_samples_ - 1
-        else:
-            self.k_ = self.k
-
-        # Validate safe_k
-        if self.with_IH and self.safe_k is None:
-            self.safe_k = self.k
 
     def _setup_label_encoder(self, y):
         self.enc_ = LabelEncoder()
@@ -818,13 +809,42 @@ class BaseDS(BaseEstimator, ClassifierMixin):
                 raise ValueError("parameter k must be higher than 1."
                                  "input k is {} ".format(self.k))
 
+        self._check_safe_k()
+        self._check_IH_rate()
+        self._validate_pool()
+
+    def _check_k(self):
+
+        # validate safe_k
+        if self.k is None:
+            self.k_ = self.n_samples_
+        elif self.k > self.n_samples_:
+            msg = "k is bigger than DSEL size. Using All DSEL examples " \
+                  "for competence estimation."
+            warnings.warn(msg, category=RuntimeWarning)
+            self.k_ = self.n_samples_ - 1
+        else:
+            self.k_ = self.k
+
+        # Validate safe_k
+        if self.with_IH and self.safe_k is None:
+            self.safe_k = self.k
+
+    def _check_IH_rate(self):
+        if not isinstance(self.IH_rate, float):
+            raise TypeError(
+                "parameter IH_rate should be a float between [0.0, 0.5]")
+        if self.IH_rate < 0 or self.IH_rate > 0.5:
+            raise ValueError("Parameter IH_rate should be between [0.0, 0.5]."
+                             "IH_rate = {}".format(self.IH_rate))
+
+    def _check_safe_k(self):
         if self.safe_k is not None:
             if not isinstance(self.safe_k, int):
                 raise TypeError("parameter safe_k should be an integer")
             if self.safe_k <= 1:
                 raise ValueError("parameter safe_k must be higher than 1."
                                  "input safe_k is {} ".format(self.safe_k))
-
         # safe_k should be equals or lower the neighborhood size k.
         if self.safe_k is not None and self.k is not None:
             if self.safe_k > self.k:
@@ -832,15 +852,6 @@ class BaseDS(BaseEstimator, ClassifierMixin):
                     "parameter safe_k must be equal or less than parameter k."
                     "input safe_k is {} and k is {}".format(self.k,
                                                             self.safe_k))
-
-        if not isinstance(self.IH_rate, float):
-            raise TypeError(
-                "parameter IH_rate should be a float between [0.0, 0.5]")
-
-        if self.IH_rate < 0 or self.IH_rate > 0.5:
-            raise ValueError("Parameter IH_rate should be between [0.0, 0.5]."
-                             "IH_rate = {}".format(self.IH_rate))
-        self._validate_pool()
 
     def _validate_pool(self):
         """ Check the estimator and the n_estimator attribute, set the
