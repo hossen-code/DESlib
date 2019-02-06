@@ -422,4 +422,4 @@ def test_meta_no_pool_of_classifiers(knn_methods):
     meta_des = METADES(knn_classifier=knn_methods, random_state=rng,
                        DSEL_perc=0.5)
     meta_des.fit(X_train, y_train)
-    assert np.isclose(meta_des.score(X_test, y_test), 0.9095744680851063)
+    assert np.isclose(meta_des.score(X_test, y_test), 0.9787234042553191)
