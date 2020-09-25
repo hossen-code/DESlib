@@ -175,12 +175,8 @@ def test_coefficient_correlation(example_diversity):
 
 
 def test_agreement_c(example_diversity):
-    from deslib.util import agreement_measure
-    y_pred_classifier1, y_pred_classifier2, y_real, y_ex1 = example_diversity
-    agreement = agreement_measure(y_real,
-                                  y_pred_classifier1,
-                                  y_pred_classifier2)
-    assert np.isclose(agreement, 0.5)
+    from deslib.util import cy_diversity
+    cy_diversity.test_predictions()
 
 
 

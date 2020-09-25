@@ -1,10 +1,11 @@
-cimport numpy as np
+# cimport numpy as np
 
 # DTYPE = np.float64
 
-cdef _process_predictions(y, y_pred1, y_pred2):
+cdef float _process_predictions_agreement(y, y_pred1, y_pred2):
     """
 	Cython implementation of the same function in `utils/diversity`.
+    note: changed to return only agreement.
 
 
     Pre-process the predictions of a pair of base classifiers for the
@@ -45,40 +46,19 @@ cdef _process_predictions(y, y_pred1, y_pred2):
     for index in range(size_y):
         if y_pred1[index] == y[index] and y_pred2[index] == y[index]:
             N11 += 1.0
-        elif y_pred1[index] == y[index] and y_pred2[index] != y[index]:
-            N10 += 1.0
-        elif y_pred1[index] != y[index] and y_pred2[index] == y[index]:
-            N01 += 1.0
-        else:
+        elif y_pred1[index] != y[index] and y_pred2[index] != y[index]:
             N00 += 1.0
 
 
-    return N00 / size_y, N10 / size_y, N01 / size_y, N11 / size_y
+    return (N00 + N11) / size_y
 
 
-def agreement_measure(y, y_pred1, y_pred2):
-    """
-    Cython implementation of the same function in `utils/diversity`.
-
-    Calculates the agreement measure between a pair of classifiers. This
-    measure is calculated by the frequency that both classifiers either
-    obtained the correct or incorrect prediction for any given sample
-
-    Parameters
-    ----------
-    y : array of shape (n_samples):
-        class labels of each sample.
-
-    y_pred1 : array of shape (n_samples):
-              predicted class labels by the classifier 1 for each sample.
-
-    y_pred2 : array of shape (n_samples):
-              predicted class labels by the classifier 2 for each sample.
-
-    Returns
-    -------
-    agreement : The frequency at which both classifiers agrees
-    """
-    N00, _, _, N11 = _process_predictions(y, y_pred1, y_pred2)
-    cdef float agreement = N00 + N11
-    return agreement
+def test_predictions():
+    import numpy as np
+    y_pred_classifier1 = np.array([0, 0, 0, 1, 0, 1, 0, 0, 0, 0])
+    y_pred_classifier2 = np.array([1, 0, 0, 1, 1, 0, 0, 0, 1, 1])
+    y_real = np.array([0, 0, 1, 0, 0, 0, 0, 1, 1, 1])
+    print(f"the agreement meaasure is:")
+    print(_process_predictions_agreement(y_real,
+                                         y_pred_classifier1,
+                                         y_pred_classifier2))
